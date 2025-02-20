@@ -52,10 +52,38 @@ test "parse Stern–Brocot sequences" {
     try std.testing.expect(std.meta.eql(parsed, result));
 }
 
+pub fn qToSB(n: i64, d: i64, u: *std.ArrayList(u8)) !void {
+    if (n < d) {
+        try u.append('L');
+        try qToSB(n, d - n, u);
+    } else if (n > d) {
+        try u.append('R');
+        try qToSB(n - d, d, u);
+    }
+}
+
+test "convert positive rationals to Stern–Brocot sequences" {
+    const gpa = std.heap.page_allocator;
+    var u = std.ArrayList(u8).init(gpa);
+    defer u.deinit();
+
+    try qToSB(4, 3, &u);
+    const result = ("RLL");
+
+    try std.testing.expect(std.mem.eql(u8, u.items, result));
+}
+
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
 
     const parsed = try parseSB("RRRLRLLL");
 
     try stdout.print("{} {}\n{} {}\n{}\n", .{ parsed.a, parsed.b, parsed.c, parsed.d, parsed.toFraction() });
+
+    const gpa = std.heap.page_allocator;
+    var u = std.ArrayList(u8).init(gpa);
+    defer u.deinit();
+
+    try qToSB(1, 5, &u);
+    try stdout.print("{s}\n", .{u.items});
 }
