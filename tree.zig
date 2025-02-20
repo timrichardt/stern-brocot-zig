@@ -22,6 +22,10 @@ const Node = struct {
     fn toN(self: Node) i64 {
         return (self.a + self.b) * (self.c + self.d);
     }
+
+    fn det(self: Node) i64 {
+        return self.a * self.d - self.b * self.c;
+    }
 };
 
 const I = Node{ .a = 1, .b = 0, .c = 0, .d = 1 }; // Root node of the tree
