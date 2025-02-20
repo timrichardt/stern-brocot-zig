@@ -1,29 +1,29 @@
 const std = @import("std");
 
 // A Stern-Brocot tree node is represented as a struct with four integers.
-const Node = struct {
+pub const Node = struct {
     a: i64,
     b: i64,
     c: i64,
     d: i64,
 
-    fn left(self: Node) Node {
+    pub fn left(self: Node) Node {
         return .{ .a = self.a + self.b, .b = self.b, .c = self.c + self.d, .d = self.d };
     }
 
-    fn right(self: Node) Node {
+    pub fn right(self: Node) Node {
         return .{ .a = self.a, .b = self.a + self.b, .c = self.c, .d = self.c + self.d };
     }
 
-    fn toFraction(self: Node) f64 {
+    pub fn toFraction(self: Node) f64 {
         return @as(f64, @floatFromInt(self.a + self.b)) / @as(f64, @floatFromInt(self.c + self.d));
     }
 
-    fn toN(self: Node) i64 {
+    pub fn toN(self: Node) i64 {
         return (self.a + self.b) * (self.c + self.d);
     }
 
-    fn det(self: Node) i64 {
+    pub fn det(self: Node) i64 {
         return self.a * self.d - self.b * self.c;
     }
 };
