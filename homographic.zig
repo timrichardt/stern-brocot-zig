@@ -46,7 +46,7 @@ pub fn homSgn(H: tree.Node, u: []const u8) i32 {
         'R' => @call(.always_tail, homSgn, .{ H.right(), rest }),
         'L' => @call(.always_tail, homSgn, .{ H.left(), rest }),
         // else branch unreachable for valid SB sequences
-        else => -2,
+        else => unreachable,
     };
 }
 
