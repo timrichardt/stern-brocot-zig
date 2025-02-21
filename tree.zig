@@ -50,13 +50,18 @@ test "parse Stern–Brocot sequences" {
     try std.testing.expect(std.meta.eql(parsed, result));
 }
 
-pub fn qToSB(n: i64, d: i64, u: *std.ArrayList(u8)) !void {
-    if (n < d) {
-        try u.append('L');
-        try qToSB(n, d - n, u);
-    } else if (n > d) {
-        try u.append('R');
-        try qToSB(n - d, d, u);
+pub fn qToSB(n_in: i64, d_in: i64, u: *std.ArrayList(u8)) !void {
+    var n = n_in;
+    var d = d_in;
+
+    while (n != d) {
+        if (n < d) {
+            try u.append('L');
+            d -= n;
+        } else {
+            try u.append('R');
+            n -= d;
+        }
     }
 }
 
@@ -82,6 +87,6 @@ pub fn main() !void {
     var u = std.ArrayList(u8).init(gpa);
     defer u.deinit();
 
-    try qToSB(1, 5, &u);
+    try qToSB(1, 5000000, &u);
     try stdout.print("{s}\n", .{u.items});
 }
