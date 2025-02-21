@@ -27,7 +27,7 @@ pub fn linSgn(a: i64, b: i64) ?i32 {
     }
 }
 
-pub fn homSgn(H: tree.Node, u: []const u8) !i32 {
+pub fn homSgn(H: tree.Node, u: []const u8) i32 {
     if (u.len == 0) {
         return sgn(H.a + H.b) * sgn(H.c + H.d);
     }
@@ -43,9 +43,10 @@ pub fn homSgn(H: tree.Node, u: []const u8) !i32 {
     const rest = u[1..];
 
     return switch (head) {
-        'R' => homSgn(H.right(), rest),
-        'L' => homSgn(H.left(), rest),
-        else => error.InvalidChar,
+        'R' => @call(.always_tail, homSgn, .{ H.right(), rest }),
+        'L' => @call(.always_tail, homSgn, .{ H.left(), rest }),
+        // else branch unreachable for valid SB sequences
+        else => -2,
     };
 }
 
@@ -59,8 +60,17 @@ test "Homographic sign algorithm" {
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
 
-    const node = tree.Node{ .a = 5, .b = -7, .c = 1, .d = 2 };
-    const u = "RLLRLR";
+    const node = tree.Node{ .a = 1, .b = -5000002, .c = 1, .d = 0 };
 
-    try stdout.print("{}\n", .{try homSgn(node, u)});
+    var buffer: [5000000]u8 = undefined;
+
+    for (0..5000000) |i| {
+        buffer[i] = 'R';
+    }
+
+    // Convert buffer to slice for printing or further use
+    const u = buffer[0..];
+    // const u = "R";
+
+    try stdout.print("{}\n", .{homSgn(node, u)});
 }
