@@ -34,13 +34,11 @@ pub fn parseSB(str: []const u8) !Node {
     var node: Node = I;
 
     for (str) |char| {
-        if (char == 'L') {
-            node = node.left();
-        } else if (char == 'R') {
-            node = node.right();
-        } else {
-            return error.InvalidChar;
-        }
+        node = switch (char) {
+            'L' => node.left(),
+            'R' => node.right(),
+            else => return error.InvalidChar,
+        };
     }
 
     return node;

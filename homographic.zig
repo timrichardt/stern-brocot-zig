@@ -1,11 +1,6 @@
 const std = @import("std");
 const tree = @import("tree.zig");
 
-const SignSum = union(enum) {
-    value: i32,
-    undefined: bool,
-};
-
 pub fn sgn(a: i64) i32 {
     if (a == 0) {
         return 0;
@@ -16,18 +11,18 @@ pub fn sgn(a: i64) i32 {
     }
 }
 
-pub fn linSgn(a: i64, b: i64) SignSum {
+pub fn linSgn(a: i64, b: i64) ?i32 {
     if (a == 0 and b == 0) {
-        return SignSum{ .value = 0 };
+        return 0;
     } else {
         const sumOfSigns = sgn(a) + sgn(b);
 
         if (sumOfSigns > 0) {
-            return SignSum{ .value = 1 };
+            return 1;
         } else if (sumOfSigns < 0) {
-            return SignSum{ .value = -1 };
+            return -1;
         } else {
-            return SignSum{ .undefined = true };
+            return null;
         }
     }
 }
@@ -35,25 +30,23 @@ pub fn linSgn(a: i64, b: i64) SignSum {
 pub fn homSgn(H: tree.Node, u: []const u8) !i32 {
     if (u.len == 0) {
         return sgn(H.a + H.b) * sgn(H.c + H.d);
-    } else {
-        const nomSgn = linSgn(H.a, H.b);
-        const denomSgn = linSgn(H.c, H.d);
-
-        if (nomSgn != .undefined and denomSgn != .undefined) {
-            return nomSgn.value * denomSgn.value;
-        } else {
-            const head = u[0];
-            const rest = u[1..];
-
-            if (head == 'R') {
-                return homSgn(H.right(), rest);
-            } else if (head == 'L') {
-                return homSgn(H.left(), rest);
-            } else {
-                return error.InvalidChar;
-            }
-        }
     }
+
+    const nomSgn = linSgn(H.a, H.b);
+    const denomSgn = linSgn(H.c, H.d);
+
+    if (nomSgn) |n| if (denomSgn) |d| {
+        return n * d;
+    };
+
+    const head = u[0];
+    const rest = u[1..];
+
+    return switch (head) {
+        'R' => homSgn(H.right(), rest),
+        'L' => homSgn(H.left(), rest),
+        else => error.InvalidChar,
+    };
 }
 
 test "Homographic sign algorithm" {
