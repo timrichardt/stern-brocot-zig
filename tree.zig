@@ -50,16 +50,59 @@ test "parse Stern–Brocot sequences" {
     try std.testing.expect(std.meta.eql(parsed, result));
 }
 
-pub fn qToSB(n_in: i64, d_in: i64, u: *std.ArrayList(u8)) !void {
+pub const Sign = enum { N, Z, P };
+pub const Branch = enum { R, L };
+
+pub const PhiIter = struct {
+    pos: usize,
+    current_chunk: [2]Branch,
+
+    fn get_chunk() [2]Branch {
+        return [2]Branch{ Branch.R, Branch.L };
+    }
+
+    pub fn init() PhiIter {
+        return PhiIter{ .pos = 0, .current_chunk = get_chunk() };
+    }
+
+    pub fn next(self: *PhiIter) ?Branch {
+        if (self.pos == self.current_chunk.len) {
+            self.pos = 1;
+            self.current_chunk = get_chunk();
+            const retval = self.current_chunk[0];
+            return retval;
+        } else {
+            const retval = self.current_chunk[self.pos];
+            self.pos += 1;
+            return retval;
+        }
+    }
+};
+
+test "generate the first 5 bits of Phi" {
+    var s_iter = PhiIter.init();
+
+    var i: u32 = 0;
+    while (i < 5) {
+        i += 1;
+        if (i % 2 == 0) {
+            try std.testing.expect(std.meta.eql(s_iter.next(), Branch.L));
+        } else {
+            try std.testing.expect(std.meta.eql(s_iter.next(), Branch.R));
+        }
+    }
+}
+
+pub fn qToSB(n_in: i64, d_in: i64, u: *std.ArrayList(Branch)) !void {
     var n = n_in;
     var d = d_in;
 
     while (n != d) {
         if (n < d) {
-            try u.append('L');
+            try u.append(Branch.L);
             d -= n;
         } else {
-            try u.append('R');
+            try u.append(Branch.R);
             n -= d;
         }
     }
@@ -67,26 +110,21 @@ pub fn qToSB(n_in: i64, d_in: i64, u: *std.ArrayList(u8)) !void {
 
 test "convert positive rationals to Stern–Brocot sequences" {
     const gpa = std.heap.page_allocator;
-    var u = std.ArrayList(u8).init(gpa);
+    var u = std.ArrayList(Branch).init(gpa);
     defer u.deinit();
 
     try qToSB(4, 3, &u);
-    const result = ("RLL");
+    const result = [_]Branch{ Branch.R, Branch.L, Branch.L };
 
-    try std.testing.expect(std.mem.eql(u8, u.items, result));
+    try std.testing.expect(std.mem.eql(Branch, u.items, &result));
 }
 
 pub fn main() !void {
-    const stdout = std.io.getStdOut().writer();
+    var s_iter = PhiIter.init();
 
-    const parsed = try parseSB("RRRLRLLL");
-
-    try stdout.print("{} {}\n{} {}\n{}\n", .{ parsed.a, parsed.b, parsed.c, parsed.d, parsed.toFraction() });
-
-    const gpa = std.heap.page_allocator;
-    var u = std.ArrayList(u8).init(gpa);
-    defer u.deinit();
-
-    try qToSB(1, 5000000, &u);
-    try stdout.print("{s}\n", .{u.items});
+    var i: u32 = 0;
+    while (i < 42) {
+        i += 1;
+        std.debug.print("{any}\n", .{s_iter.next()});
+    }
 }
